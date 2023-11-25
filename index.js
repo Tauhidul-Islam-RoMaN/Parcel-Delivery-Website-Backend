@@ -1,11 +1,12 @@
 const express = require('express');
-const { MongoClient, ServerApiVersion } = require('mongodb');
 const cors = require('cors');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+const port = process.env.PORT || 5000
+
 
 require("dotenv").config()
 
 const app = express()
-const port = process.env.PORT || 5000
 
 app.use(cors())
 app.use(express.json())
@@ -21,8 +22,185 @@ const client = new MongoClient(uri, {
   }
 });
 
+
 async function run() {
   try {
+
+    const usersCollection = client.db("parcelDB").collection("users")
+    const bookingsCollection = client.db("parcelDB").collection("bookings")
+    const featuresCollection = client.db("parcelDB").collection("features")
+
+    // user related api
+    app.post('/users', async (req, res) => {
+      try {
+        const newUser = req.body
+        const query = { email: newUser.email }
+        console.log(newUser);
+        const existingUser = await usersCollection.findOne(query)
+        if (existingUser) {
+          return res.send({ message: 'User already exist', insertedId: null })
+        }
+        const result = await usersCollection.insertOne(newUser)
+        res.send(result)
+      }
+      catch (err) {
+        console.log(err);
+      }
+    })
+
+    app.get('/users', async (req, res) => {
+      try {
+        const role = req.query.role
+        const page = parseInt(req.query.page);
+        const size = parseInt(req.query.size);
+        const query = {}
+        if (role) {
+          query.role = role;
+        }
+        const cursor = usersCollection.find(query)
+        .skip((page - 1) * size)
+        .limit(size)
+        const result = await cursor.toArray()
+        res.send(result)
+      }
+      catch (err) {
+        console.log(err);
+      }
+    })
+    app.get('/users/:id', async (req, res) => {
+      try {
+        const id = req.params.id
+        console.log(id);
+        const query = {
+          _id: new ObjectId(id)
+        }
+        const result = await usersCollection.findOne(query)
+        console.log(result);
+        res.send(result)
+      }
+      catch (err) {
+        console.log(err);
+      }
+    })
+
+    app.patch('/users/:id', async (req, res) => {
+      try {
+        const userInfo = req.body
+        const id = req.params.id
+        const filter = {
+          _id: new ObjectId(id)
+        }
+        const updatedUserInfo = {
+          $set: {
+            email: userInfo.email,
+            name: userInfo.name,
+            role: userInfo.role,
+            number: userInfo.number,
+          }
+        }
+        const result = await usersCollection.updateOne(filter, updatedUserInfo)
+        res.send(result)
+      }
+      catch (err) {
+        console.log(err);
+      }
+    })
+
+    //  pagination
+    app.get('/usersCount', async (req, res) => {
+      const count = await usersCollection.estimatedDocumentCount()
+      res.send({ count })
+    })
+
+
+    // featured item
+    app.get('/features', async (req, res) => {
+      try {
+        const result = await featuresCollection.find().toArray()
+        res.send(result)
+      }
+      catch (err) {
+        console.log(err);
+      }
+    })
+
+    // booking related api
+    app.post('/bookings', async (req, res) => {
+      try {
+        const bookingInfo = req.body
+        console.log(bookingInfo);
+        const result = await bookingsCollection.insertOne(bookingInfo)
+        res.send(result)
+      }
+      catch (err) {
+        console.log(err);
+      }
+    })
+
+    // getting booked item by email
+    app.get('/bookings', async (req, res) => {
+      try {
+        const email = req.query.email
+        const query = {}
+        if (email) {
+          query = { email: email };
+        }
+        const result = await bookingsCollection.find(query).toArray()
+        res.send(result)
+      }
+      catch (err) {
+        console.log(err);
+      }
+    })
+
+    app.get('/bookings/:id', async (req, res) => {
+      try {
+        const id = req.params.id
+        console.log(id);
+        const query = {
+          _id: new ObjectId(id)
+        }
+        const result = await bookingsCollection.findOne(query)
+        console.log(result);
+        res.send(result)
+      }
+      catch (err) {
+        console.log(err);
+      }
+    })
+
+    app.patch('/bookings/:id', async (req, res) => {
+      try {
+        const updatedBookingInfo = req.body
+        const id = req.params.id
+        const filter = {
+          _id: new ObjectId(id)
+        }
+        const updatedBooking = {
+          $set: {
+            address: updatedBookingInfo.address,
+            deliveryDate: updatedBookingInfo.deliveryDate,
+            bookingDate: updatedBookingInfo.bookingDate,
+            latitude: updatedBookingInfo.latitude,
+            longitude: updatedBookingInfo.longitude,
+            phone: updatedBookingInfo.phone,
+            price: updatedBookingInfo.price,
+            receiversName: updatedBookingInfo.receiversName,
+            receiversPhone: updatedBookingInfo.receiversPhone,
+            type: updatedBookingInfo.type,
+            weight: updatedBookingInfo.weight,
+            status: updatedBookingInfo.status
+          }
+        }
+        const result = await bookingsCollection.updateOne(filter, updatedBooking)
+        res.send(result)
+      }
+      catch (err) {
+        console.log(err);
+      }
+    })
+
+
     // Connect the client to the server	(optional starting in v4.7)
     // await client.connect();
     // Send a ping to confirm a successful connection
@@ -35,10 +213,10 @@ async function run() {
 }
 run().catch(console.dir);
 
-app.get('/', (req,res) => {
-    res.send('Parcel Management App is running')
+app.get('/', (req, res) => {
+  res.send('Parcel Management App is running')
 })
 
 app.listen(port, () => {
-    console.log(`Parcel Management App is running on port ${port}`);
+  console.log(`Parcel Management App is running on port ${port}`);
 })
