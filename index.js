@@ -140,10 +140,24 @@ async function run() {
     // getting booked item by email
     app.get('/bookings', async (req, res) => {
       try {
-        const email = req.query.email
-        const query = {}
+        const startDate = (req.query.startDate);
+        const endDate = (req.query.endDate);
+        const status = (req.query.status);
+        const email = req.query.email 
+        let query = {}
         if (email) {
           query = { email: email };
+        }
+        if (status) {
+          query ={status : status}          
+        }
+        if (startDate && endDate) {
+           query = {
+            deliveryDate: {
+              $gte: startDate,
+              $lte: endDate, 
+            },
+          };
         }
         const result = await bookingsCollection.find(query).toArray()
         res.send(result)
@@ -189,7 +203,10 @@ async function run() {
             receiversPhone: updatedBookingInfo.receiversPhone,
             type: updatedBookingInfo.type,
             weight: updatedBookingInfo.weight,
-            status: updatedBookingInfo.status
+            status: updatedBookingInfo.status,
+            departureDate: updatedBookingInfo.departureDate,
+            dmId: updatedBookingInfo.dmId,
+            assignedMan:updatedBookingInfo.assignedMan,
           }
         }
         const result = await bookingsCollection.updateOne(filter, updatedBooking)
@@ -199,6 +216,70 @@ async function run() {
         console.log(err);
       }
     })
+
+    // combination of users & bookings
+  //   app.get('/deliveryMan', async (req, res) => {
+  //     try {
+  //         const assignedMan = req.query.assignedMan;
+  //         console.log('Assigned Man:', assignedMan);
+  
+  //         const result = await bookingsCollection.aggregate([
+  //             {
+  //                 $match: {
+  //                     assignedMan: assignedMan,
+  //                 },
+  //             },
+  //             {
+  //                 $lookup: {
+  //                     from: 'users',
+  //                     localField: 'assignedMan',
+  //                     foreignField: 'name',
+  //                     as: 'userInfo',
+  //                 },
+  //             },
+  //             {
+  //                 $unwind: '$userInfo',
+  //             },
+  //             {
+  //                 $project: {
+  //                     _id: 1,
+  //                     dmId: 1,
+  //                     assignedMan: 1,
+  //                     'userInfo.name': 1,
+  //                     'userInfo.email': 1,
+  //                 },
+  //             },
+  //         ]).toArray();
+  
+  //         console.log('Result:', result); // Log the result for debugging
+  
+  //         res.send(result);
+  //     } catch (err) {
+  //         console.log(err);
+  //         res.status(500).send('Internal Server Error');
+  //     }
+  // });
+  app.get('/deliveryman', async (req, res) => {
+    const email = req.query.email 
+        let query = { email: email }
+  
+    // Find the user with the given email
+    const user = await usersCollection.findOne({ email: email });
+    console.log(user);
+  
+    if (!user) {
+      return res.status(404).json({ message: 'No Parcel Assigned' });
+    }
+  
+    // Find bookings where assignedMan matches user's name
+    const bookings = await bookingsCollection.find({ assignedMan: user.name }).toArray();
+    console.log(bookings);
+  
+    res.send(bookings);
+  });
+  
+  
+  
 
 
     // Connect the client to the server	(optional starting in v4.7)
