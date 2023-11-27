@@ -29,6 +29,7 @@ async function run() {
     const usersCollection = client.db("parcelDB").collection("users")
     const bookingsCollection = client.db("parcelDB").collection("bookings")
     const featuresCollection = client.db("parcelDB").collection("features")
+    const reviewsCollection = client.db("parcelDB").collection("reviews")
 
     // user related api
     app.post('/users', async (req, res) => {
@@ -100,6 +101,47 @@ async function run() {
         }
         const result = await usersCollection.updateOne(filter, updatedUserInfo)
         res.send(result)
+      }
+      catch (err) {
+        console.log(err);
+      }
+    })
+
+    // reviews
+    app.post('/reviews', async (req, res) => {
+      try {
+        const review = req.body
+        const result = await reviewsCollection.insertOne(review)
+        res.send(result)
+      }
+      catch (err) {
+        console.log(err);
+      }
+    })
+    app.get('/reviews', async (req, res) => {
+      try {
+        // const result = await reviewsCollection.find().toArray()
+        // res.send(result)
+        const email = req.query.email 
+        let query = { email: email }
+  
+    // Find the user with the given email
+    const user = await usersCollection.findOne({ email: email });
+    // console.log(user);
+  
+    if (!user) {
+      return res.status(404).json({ message: 'No Parcel Assigned' });
+    }
+  
+    // Find bookings where assignedMan matches user's name
+    const bookings = await bookingsCollection.findOne({ assignedMan: user.name });
+    // console.log(bookings);
+    // find the assigned man who is reviewed
+    const reviews = await reviewsCollection.find({ dmId: bookings.dmId }).toArray();
+    console.log(reviews);
+  
+    res.send(reviews);
+
       }
       catch (err) {
         console.log(err);
