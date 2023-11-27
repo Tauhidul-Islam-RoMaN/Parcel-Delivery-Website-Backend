@@ -59,8 +59,8 @@ async function run() {
           query.role = role;
         }
         const cursor = usersCollection.find(query)
-        .skip((page - 1) * size)
-        .limit(size)
+          .skip((page - 1) * size)
+          .limit(size)
         const result = await cursor.toArray()
         res.send(result)
       }
@@ -122,25 +122,25 @@ async function run() {
       try {
         // const result = await reviewsCollection.find().toArray()
         // res.send(result)
-        const email = req.query.email 
+        const email = req.query.email
         let query = { email: email }
-  
-    // Find the user with the given email
-    const user = await usersCollection.findOne({ email: email });
-    // console.log(user);
-  
-    if (!user) {
-      return res.status(404).json({ message: 'No Parcel Assigned' });
-    }
-  
-    // Find bookings where assignedMan matches user's name
-    const bookings = await bookingsCollection.findOne({ assignedMan: user.name });
-    // console.log(bookings);
-    // find the assigned man who is reviewed
-    const reviews = await reviewsCollection.find({ dmId: bookings.dmId }).toArray();
-    console.log(reviews);
-  
-    res.send(reviews);
+
+        // Find the user with the given email
+        const user = await usersCollection.findOne({ email: email });
+        // console.log(user);
+
+        if (!user) {
+          return res.status(404).json({ message: 'No Parcel Assigned' });
+        }
+
+        // Find bookings where assignedMan matches user's name
+        const bookings = await bookingsCollection.findOne({ assignedMan: user.name });
+        // console.log(bookings);
+        // find the assigned man who is reviewed
+        const reviews = await reviewsCollection.find({ dmId: bookings.dmId }).toArray();
+        console.log(reviews);
+
+        res.send(reviews);
 
       }
       catch (err) {
@@ -185,19 +185,19 @@ async function run() {
         const startDate = (req.query.startDate);
         const endDate = (req.query.endDate);
         const status = (req.query.status);
-        const email = req.query.email 
+        const email = req.query.email
         let query = {}
         if (email) {
           query = { email: email };
         }
         if (status) {
-          query ={status : status}          
+          query = { status: status }
         }
         if (startDate && endDate) {
-           query = {
+          query = {
             deliveryDate: {
               $gte: startDate,
-              $lte: endDate, 
+              $lte: endDate,
             },
           };
         }
@@ -228,6 +228,15 @@ async function run() {
     app.patch('/bookings/:id', async (req, res) => {
       try {
         const updatedBookingInfo = req.body
+        const query = {
+          assignedMan: updatedBookingInfo.assignedMan,
+        }
+        console.log("query", query);
+        const existingMan = await bookingsCollection.findOne(query)
+        console.log("DeliveryMan", existingMan);
+        if (existingMan) {
+          return res.send({ message: 'dmId already exist', insertedId: null, dmId:existingMan.dmId })
+        }
         const id = req.params.id
         const filter = {
           _id: new ObjectId(id)
@@ -248,7 +257,7 @@ async function run() {
             status: updatedBookingInfo.status,
             departureDate: updatedBookingInfo.departureDate,
             dmId: updatedBookingInfo.dmId,
-            assignedMan:updatedBookingInfo.assignedMan,
+            assignedMan: updatedBookingInfo.assignedMan,
           }
         }
         const result = await bookingsCollection.updateOne(filter, updatedBooking)
@@ -259,69 +268,28 @@ async function run() {
       }
     })
 
-    // combination of users & bookings
-  //   app.get('/deliveryMan', async (req, res) => {
-  //     try {
-  //         const assignedMan = req.query.assignedMan;
-  //         console.log('Assigned Man:', assignedMan);
-  
-  //         const result = await bookingsCollection.aggregate([
-  //             {
-  //                 $match: {
-  //                     assignedMan: assignedMan,
-  //                 },
-  //             },
-  //             {
-  //                 $lookup: {
-  //                     from: 'users',
-  //                     localField: 'assignedMan',
-  //                     foreignField: 'name',
-  //                     as: 'userInfo',
-  //                 },
-  //             },
-  //             {
-  //                 $unwind: '$userInfo',
-  //             },
-  //             {
-  //                 $project: {
-  //                     _id: 1,
-  //                     dmId: 1,
-  //                     assignedMan: 1,
-  //                     'userInfo.name': 1,
-  //                     'userInfo.email': 1,
-  //                 },
-  //             },
-  //         ]).toArray();
-  
-  //         console.log('Result:', result); // Log the result for debugging
-  
-  //         res.send(result);
-  //     } catch (err) {
-  //         console.log(err);
-  //         res.status(500).send('Internal Server Error');
-  //     }
-  // });
-  app.get('/deliveryman', async (req, res) => {
-    const email = req.query.email 
-        let query = { email: email }
-  
-    // Find the user with the given email
-    const user = await usersCollection.findOne({ email: email });
-    console.log(user);
-  
-    if (!user) {
-      return res.status(404).json({ message: 'No Parcel Assigned' });
-    }
-  
-    // Find bookings where assignedMan matches user's name
-    const bookings = await bookingsCollection.find({ assignedMan: user.name }).toArray();
-    console.log(bookings);
-  
-    res.send(bookings);
-  });
-  
-  
-  
+
+    app.get('/deliveryman', async (req, res) => {
+      const email = req.query.email
+      let query = { email: email }
+
+      // Find the user with the given email
+      const user = await usersCollection.findOne({ email: email });
+      console.log(user);
+
+      if (!user) {
+        return res.status(404).json({ message: 'No Parcel Assigned' });
+      }
+
+      // Find bookings where assignedMan matches user's name
+      const bookings = await bookingsCollection.find({ assignedMan: user.name }).toArray();
+      console.log(bookings);
+
+      res.send(bookings);
+    });
+
+
+
 
 
     // Connect the client to the server	(optional starting in v4.7)
