@@ -31,6 +31,8 @@ async function run() {
     const featuresCollection = client.db("parcelDB").collection("features")
     const reviewsCollection = client.db("parcelDB").collection("reviews")
 
+    
+    
     // user related api
     app.post('/users', async (req, res) => {
       try {
@@ -235,7 +237,7 @@ async function run() {
         const existingMan = await bookingsCollection.findOne(query)
         console.log("DeliveryMan", existingMan);
         if (existingMan) {
-          return res.send({ message: 'dmId already exist', insertedId: null, dmId:existingMan.dmId })
+          return res.send({ message: 'dmId already exist', insertedId: null, dmId: existingMan.dmId })
         }
         const id = req.params.id
         const filter = {
