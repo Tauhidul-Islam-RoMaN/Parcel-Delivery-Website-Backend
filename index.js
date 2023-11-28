@@ -295,25 +295,39 @@ async function run() {
       }
     })
 
-    app.get('/bookingsForChart', async(req,res) => {
-      try{
+    app.get('/bookingsForChart', async (req, res) => {
+      try {
         const result = await bookingsCollection.aggregate([
           {
-            $group:{
-              _id:'$bookingDate',
-              bookingCount : {$sum :1}
+            $group: {
+              _id: '$bookingDate',
+              bookingCount: { $sum: 1 }
             }
           },
           {
             $sort: {
-              _id:1
+              _id: 1
+            }
+          }
+        ]).toArray()
+
+        const results = await bookingsCollection.aggregate([
+          {
+            $group: {
+              _id: '$bookingDate',
+              bookingCount: { $sum: 1 }
+            }
+          },
+          {
+            $sort: {
+              _id: 1
             }
           }
         ]).toArray()
         console.log(result);
         res.send(result)
       }
-      catch(err){
+      catch (err) {
         console.log(err);
       }
     })
@@ -340,7 +354,7 @@ async function run() {
         const query = {
           assignedMan: updatedBookingInfo.assignedMan,
         }
-        console.log( 'from form', updatedBookingInfo.dmId);
+        console.log('from form', updatedBookingInfo.dmId);
         console.log("query", query);
         const existingMan = await bookingsCollection.findOne(query)
         console.log("DeliveryMan from db", existingMan);
@@ -405,6 +419,43 @@ async function run() {
       catch (err) {
         console.log(err);
       }
+    })
+
+
+    app.get('/topRatedDeliveryMan', async (req, res) => {
+
+      const topDeliveryMan = await reviewsCollection.aggregate([
+        {
+          $group: {
+            _id: "$dmId",
+            agRating: { $avg: "$rating" },
+            totalBookings: { $sum: 1 }
+          }
+        },
+        {
+          $lookup: {
+            from: "bookingsCollection",
+            localField: "_id",
+            foreignField: "dmId",
+            as: "bookingInfo"
+          }
+        },
+        {
+          $project: {
+            _id: 1,
+            avgRating: 1,
+            totalBookings: 1,
+            name: { $arrayElemAt: ["$bookingInfo.assignedMan", 0] }
+          }
+        },
+        {
+          $sort: { avgRating: -1, totalBookings: -1 }
+        },
+        {
+          $limit: 5
+        }
+      ]).toArray();
+      res.send(topDeliveryMan)
     })
 
 
