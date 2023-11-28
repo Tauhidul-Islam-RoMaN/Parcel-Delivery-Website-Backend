@@ -295,6 +295,29 @@ async function run() {
       }
     })
 
+    app.get('/bookingsForChart', async(req,res) => {
+      try{
+        const result = await bookingsCollection.aggregate([
+          {
+            $group:{
+              _id:'$bookingDate',
+              bookingCount : {$sum :1}
+            }
+          },
+          {
+            $sort: {
+              _id:1
+            }
+          }
+        ]).toArray()
+        console.log(result);
+        res.send(result)
+      }
+      catch(err){
+        console.log(err);
+      }
+    })
+
     app.get('/bookings/:id', async (req, res) => {
       try {
         const id = req.params.id
