@@ -31,8 +31,8 @@ async function run() {
     const featuresCollection = client.db("parcelDB").collection("features")
     const reviewsCollection = client.db("parcelDB").collection("reviews")
 
-    
-    
+
+
     // user related api
     app.post('/users', async (req, res) => {
       try {
@@ -54,15 +54,15 @@ async function run() {
     app.get('/users', async (req, res) => {
       try {
         const role = req.query.role
-        const page = parseInt(req.query.page);
-        const size = parseInt(req.query.size);
+        // const page = parseInt(req.query.page);
+        // const size = parseInt(req.query.size);
         const query = {}
         if (role) {
           query.role = role;
         }
         const cursor = usersCollection.find(query)
-          .skip((page - 1) * size)
-          .limit(size)
+          // .skip((page - 1) * size)
+          // .limit(size)
         const result = await cursor.toArray()
         res.send(result)
       }
@@ -70,6 +70,43 @@ async function run() {
         console.log(err);
       }
     })
+
+    app.get('/sortedDeliveryMan', async (req, res) => {
+      try {
+        const deliveryMan = await usersCollection.find({ role: 'delivery-man' }).sort({ fieldNameToSort: 1 }).toArray();
+        res.send(deliveryMan)
+      }
+      catch (err) {
+        console.log(err);
+      }
+    })
+
+    app.get('/sortedUsers', async (req, res) => {
+      try {
+        const allUser = await usersCollection.find({ role: 'user' }).sort({ fieldNameToSort: 1 }).toArray();
+        res.send(allUser)
+      }
+      catch (err) {
+        console.log(err);
+      }
+    })
+    app.get('/sortedUsersWithPage', async (req, res) => {
+      try {
+        const page = parseInt(req.query.page);
+        const size = parseInt(req.query.size);
+        const cursor = usersCollection.find({ role: 'user' }).sort({ fieldNameToSort: 1 })
+          .skip((page - 1) * size)
+          .limit(size)
+        const result = await cursor
+          .toArray();
+          console.log(('page',page, 'size',size, 'result',result ));
+        res.send(result)
+      }
+      catch (err) {
+        console.log(err);
+      }
+    })
+
     app.get('/users/:id', async (req, res) => {
       try {
         const id = req.params.id
@@ -152,7 +189,7 @@ async function run() {
 
     //  pagination
     app.get('/usersCount', async (req, res) => {
-      const count = await usersCollection.estimatedDocumentCount()
+      const count = await usersCollection.countDocuments({ role: 'user' });
       res.send({ count })
     })
 
