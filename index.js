@@ -61,8 +61,8 @@ async function run() {
           query.role = role;
         }
         const cursor = usersCollection.find(query)
-          // .skip((page - 1) * size)
-          // .limit(size)
+        // .skip((page - 1) * size)
+        // .limit(size)
         const result = await cursor.toArray()
         res.send(result)
       }
@@ -99,7 +99,7 @@ async function run() {
           .limit(size)
         const result = await cursor
           .toArray();
-          console.log(('page',page, 'size',size, 'result',result ));
+        console.log(('page', page, 'size', size, 'result', result));
         res.send(result)
       }
       catch (err) {
@@ -186,7 +186,7 @@ async function run() {
         console.log(err);
       }
     })
-    
+
 
     //  pagination
     app.get('/usersCount', async (req, res) => {
@@ -263,7 +263,7 @@ async function run() {
     // })
 
     // getting booked item by email
-    
+
     app.get('/bookings', async (req, res) => {
       try {
         const startDate = (req.query.startDate);
@@ -317,37 +317,67 @@ async function run() {
         const query = {
           assignedMan: updatedBookingInfo.assignedMan,
         }
+        console.log( 'from form', updatedBookingInfo.dmId);
         console.log("query", query);
         const existingMan = await bookingsCollection.findOne(query)
-        console.log("DeliveryMan", existingMan);
-        if (existingMan) {
+        console.log("DeliveryMan from db", existingMan);
+        if (!existingMan) {
+          const id = req.params.id
+          const filter = {
+            _id: new ObjectId(id)
+          }
+          const updatedBooking = {
+            $set: {
+              address: updatedBookingInfo.address,
+              deliveryDate: updatedBookingInfo.deliveryDate,
+              bookingDate: updatedBookingInfo.bookingDate,
+              latitude: updatedBookingInfo.latitude,
+              longitude: updatedBookingInfo.longitude,
+              phone: updatedBookingInfo.phone,
+              price: updatedBookingInfo.price,
+              receiversName: updatedBookingInfo.receiversName,
+              receiversPhone: updatedBookingInfo.receiversPhone,
+              type: updatedBookingInfo.type,
+              weight: updatedBookingInfo.weight,
+              status: updatedBookingInfo.status,
+              departureDate: updatedBookingInfo.departureDate,
+              dmId: updatedBookingInfo.dmId,
+              assignedMan: updatedBookingInfo.assignedMan,
+            }
+          }
+          const result = await bookingsCollection.updateOne(filter, updatedBooking)
+          res.send(result)
+        }
+        else if (existingMan?.dmId !== updatedBookingInfo?.dmId) {
           return res.send({ message: 'dmId already exist', insertedId: null, dmId: existingMan.dmId })
         }
-        const id = req.params.id
-        const filter = {
-          _id: new ObjectId(id)
-        }
-        const updatedBooking = {
-          $set: {
-            address: updatedBookingInfo.address,
-            deliveryDate: updatedBookingInfo.deliveryDate,
-            bookingDate: updatedBookingInfo.bookingDate,
-            latitude: updatedBookingInfo.latitude,
-            longitude: updatedBookingInfo.longitude,
-            phone: updatedBookingInfo.phone,
-            price: updatedBookingInfo.price,
-            receiversName: updatedBookingInfo.receiversName,
-            receiversPhone: updatedBookingInfo.receiversPhone,
-            type: updatedBookingInfo.type,
-            weight: updatedBookingInfo.weight,
-            status: updatedBookingInfo.status,
-            departureDate: updatedBookingInfo.departureDate,
-            dmId: updatedBookingInfo.dmId,
-            assignedMan: updatedBookingInfo.assignedMan,
+        else {
+          const id = req.params.id
+          const filter = {
+            _id: new ObjectId(id)
           }
+          const updatedBooking = {
+            $set: {
+              address: updatedBookingInfo.address,
+              deliveryDate: updatedBookingInfo.deliveryDate,
+              bookingDate: updatedBookingInfo.bookingDate,
+              latitude: updatedBookingInfo.latitude,
+              longitude: updatedBookingInfo.longitude,
+              phone: updatedBookingInfo.phone,
+              price: updatedBookingInfo.price,
+              receiversName: updatedBookingInfo.receiversName,
+              receiversPhone: updatedBookingInfo.receiversPhone,
+              type: updatedBookingInfo.type,
+              weight: updatedBookingInfo.weight,
+              status: updatedBookingInfo.status,
+              departureDate: updatedBookingInfo.departureDate,
+              dmId: updatedBookingInfo.dmId,
+              assignedMan: updatedBookingInfo.assignedMan,
+            }
+          }
+          const result = await bookingsCollection.updateOne(filter, updatedBooking)
+          res.send(result)
         }
-        const result = await bookingsCollection.updateOne(filter, updatedBooking)
-        res.send(result)
       }
       catch (err) {
         console.log(err);
