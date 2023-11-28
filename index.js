@@ -186,6 +186,7 @@ async function run() {
         console.log(err);
       }
     })
+    
 
     //  pagination
     app.get('/usersCount', async (req, res) => {
@@ -217,14 +218,59 @@ async function run() {
         console.log(err);
       }
     })
+    // app.get('/bookings', async (req, res) => {
+    //   try {
+    //     const startDate = (req.query.startDate);
+    //     const endDate = (req.query.endDate);
+    //     const status = (req.query.status);
+    //     const email = req.query.email
+    //     console.log(email);
+    //     let query = {}
+    //     // if (email) {
+    //     //   query = { email: email };
+    //     // }
+    //     if (email) {
+    //       query = { email: email };
+    //       const result = await bookingsCollection.find(query).toArray();
+    //       if (result) {
+    //         res.send(result);
+    //       } else {
+    //         const result = await bookingsCollection.findOne(query);
+    //         res.send([]);
+    //       }
+    //     } else {
+    //       // If email is not provided, find multiple documents
+    //       const result = await bookingsCollection.findOne(query);
+    //     }
+    //     if (status) {
+    //       query = { status: status }
+    //     }
+    //     if (startDate && endDate) {
+    //       query = {
+    //         deliveryDate: {
+    //           $gte: startDate,
+    //           $lte: endDate,
+    //         },
+    //       };
+    //     }
+    //     const result = await bookingsCollection.find(query).toArray()
+    //     console.log(result);
+    //     res.send(result)
+    //   }
+    //   catch (err) {
+    //     console.log(err);
+    //   }
+    // })
 
     // getting booked item by email
+    
     app.get('/bookings', async (req, res) => {
       try {
         const startDate = (req.query.startDate);
         const endDate = (req.query.endDate);
         const status = (req.query.status);
         const email = req.query.email
+        console.log(email);
         let query = {}
         if (email) {
           query = { email: email };
@@ -241,6 +287,7 @@ async function run() {
           };
         }
         const result = await bookingsCollection.find(query).toArray()
+        console.log(result);
         res.send(result)
       }
       catch (err) {
