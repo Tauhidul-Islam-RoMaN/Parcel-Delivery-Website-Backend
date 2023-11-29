@@ -544,26 +544,26 @@ async function run() {
               }
               return count;
             }, 0);
-    
+
             // Get the dmId from the bookingCollection
             const dmIdFromBooking = assignedBookings.length > 0 ? assignedBookings[0].dmId : null;
-            console.log( "dmId from booking", dmIdFromBooking);
-    
+            console.log("dmId from booking", dmIdFromBooking);
+
             // Find reviews for the dmId
             const reviewsForDmId = dmIdFromBooking
               ? await reviewsCollection.find({ dmId: dmIdFromBooking }).toArray()
               : [];
-              // console.log( "reviews for dmId", reviewsForDmId);
-    
+            // console.log( "reviews for dmId", reviewsForDmId);
+
             // Calculate the sum of ratings
             const totalRating = reviewsForDmId.reduce((sum, review) => sum + parseFloat(review.rating), 0);
-            console.log( "total rating", totalRating);
-    
+            console.log("total rating", totalRating);
+
             // Calculate the average rating
             const avgRating = reviewsForDmId.length > 0 ? totalRating / reviewsForDmId.length : 0;
             // console.log( "avg rating", avgRating);
 
-    
+
             return {
               name,
               number,
@@ -574,10 +574,19 @@ async function run() {
             };
           })
         );
-        result.sort((a, b) => b.avgRating - a.avgRating);
-        const top5 = result.slice(0, 5);    
+        // result.sort((a, b) => b.avgRating - a.avgRating);
+        // result.sort((a, b) => b.numParcelsDelivered - a.numParcelsDelivered);
+        // result.sort({ "avgRating": -1, "numParcelsDelivered": -1 })
+        result.sort((a, b) => {
+          if (a.avgRating === b.avgRating) {
+            // If avgRating is the same, compare based on numParcelsDelivered
+            return b.numParcelsDelivered - a.numParcelsDelivered;
+          }
+          // Otherwise, compare based on avgRating
+          return b.avgRating - a.avgRating;
+        });
         // console.log(result);
-        res.send(top5);
+        res.send(result);
       }
       catch (err) {
 
