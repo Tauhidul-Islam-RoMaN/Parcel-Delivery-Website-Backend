@@ -348,6 +348,8 @@ async function run() {
       }
     })
 
+
+
     app.patch('/bookings/:id', async (req, res) => {
       try {
         const updatedBookingInfo = req.body
@@ -457,6 +459,55 @@ async function run() {
       ]).toArray();
       res.send(topDeliveryMan)
     })
+
+    app.get('/sortedUsersWithPage', async (req, res) => {
+      try {
+        const page = parseInt(req.query.page);
+        const size = parseInt(req.query.size);
+        const cursor = usersCollection.find({ role: 'user' })
+          .skip((page - 1) * size)
+          .limit(size)
+        const result = await cursor
+          .toArray();
+        res.send(result)
+      }
+      catch (err) {
+        console.log(err);
+      }
+    })
+
+    app.get('/allUsersTable', async (req, res) => {
+      try {
+        const page = parseInt(req.query.page);
+        const size = parseInt(req.query.size);
+        const query = { role: "user" }
+        const userData = await usersCollection.find(query)
+          .skip((page - 1) * size)
+          .limit(size)
+          .toArray();
+        console.log('userdata', userData);
+        const result = await Promise.all(
+          userData.map(async (user) => {
+            const {_id, name, email, role, number } = user;
+            const bookingCount = await bookingsCollection.countDocuments({ name });
+            return {
+              _id,
+              name,
+              email,
+              role,
+              number,
+              bookingCount,
+            };
+          })
+        );
+        console.log(result);
+        res.send(result)
+      }
+      catch (err) {
+        console.log(err);
+      }
+    });
+
 
 
     app.get('/deliveryman', async (req, res) => {
