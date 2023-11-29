@@ -488,7 +488,7 @@ async function run() {
         console.log('userdata', userData);
         const result = await Promise.all(
           userData.map(async (user) => {
-            const {_id, name, email, role, number } = user;
+            const { _id, name, email, role, number } = user;
             const bookingCount = await bookingsCollection.countDocuments({ name });
             return {
               _id,
@@ -529,13 +529,61 @@ async function run() {
       res.send(bookings);
     });
 
+    app.get('/deliverymanWithRating', async (req, res) => {
+      try {
+        const query = { role: "delivery-man" }
+        const userData = await usersCollection.find(query).toArray(); // Fetch user data from the collection
 
+        const result = await Promise.all(
+          userData.map(async (user) => {
+            const { name, number, photo } = user;
+            const assignedBookings = await bookingsCollection.find({ assignedMan: name }).toArray();
+            const numParcelsDelivered = assignedBookings.reduce((count, booking) => {
+              if (booking.status === 'delivered') {
+                return count + 1;
+              }
+              return count;
+            }, 0);
+    
+            // Get the dmId from the bookingCollection
+            const dmIdFromBooking = assignedBookings.length > 0 ? assignedBookings[0].dmId : null;
+            console.log( "dmId from booking", dmIdFromBooking);
+    
+            // Find reviews for the dmId
+            const reviewsForDmId = dmIdFromBooking
+              ? await reviewsCollection.find({ dmId: dmIdFromBooking }).toArray()
+              : [];
+              // console.log( "reviews for dmId", reviewsForDmId);
+    
+            // Calculate the sum of ratings
+            const totalRating = reviewsForDmId.reduce((sum, review) => sum + parseFloat(review.rating), 0);
+            console.log( "total rating", totalRating);
+    
+            // Calculate the average rating
+            const avgRating = reviewsForDmId.length > 0 ? totalRating / reviewsForDmId.length : 0;
+            // console.log( "avg rating", avgRating);
 
+    
+            return {
+              name,
+              number,
+              photo,
+              avgRating,
+              dmId: dmIdFromBooking,
+              numParcelsDelivered,
+            };
+          })
+        );
+        result.sort((a, b) => b.avgRating - a.avgRating);
+        const top5 = result.slice(0, 5);    
+        // console.log(result);
+        res.send(top5);
+      }
+      catch (err) {
 
+      }
+    })
 
-    // Connect the client to the server	(optional starting in v4.7)
-    // await client.connect();
-    // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
