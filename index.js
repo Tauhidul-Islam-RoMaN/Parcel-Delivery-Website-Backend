@@ -579,14 +579,18 @@ async function run() {
         // result.sort({ "avgRating": -1, "numParcelsDelivered": -1 })
         result.sort((a, b) => {
           if (a.avgRating === b.avgRating) {
-            // If avgRating is the same, compare based on numParcelsDelivered
             return b.numParcelsDelivered - a.numParcelsDelivered;
           }
-          // Otherwise, compare based on avgRating
           return b.avgRating - a.avgRating;
         });
-        // console.log(result);
         res.send(result);
+        
+        // result.sort((a, b) => {
+        //   if (b.numParcelsDelivered !== a.numParcelsDelivered) {
+        //     return b.numParcelsDelivered - a.numParcelsDelivered;
+        //   }
+        //   return b.avgRating - a.avgRating;
+        // });
       }
       catch (err) {
 
